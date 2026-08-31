@@ -14,6 +14,10 @@ Pages via `.github/workflows/deploy.yml`, at
 <https://bobby-sills.github.io/sit-still-webapp/>. That URL is HTTPS, which the
 camera requires, so it also works on a phone.
 
+This needs Pages switched on once, by hand: **Settings → Pages → Build and
+deployment → Source: GitHub Actions**. A workflow cannot enable Pages for its
+own repository, so the first run fails until that is set.
+
 ## Running it locally
 
 ```sh

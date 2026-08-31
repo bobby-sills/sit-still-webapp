@@ -26,11 +26,6 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - uses: actions/configure-pages@v5
-        with:
-          # Turns Pages on for the repo the first time this runs.
-          enablement: true
-
       # postinstall fetches the two vision models into public/.
       - run: npm ci
 
