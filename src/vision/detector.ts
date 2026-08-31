@@ -13,10 +13,14 @@ import type { FaceBox, Observation } from '../types'
  * retained.
  */
 
+// BASE_URL always ends in a slash, and is '/' unless the site is served from a
+// subpath (GitHub Pages serves at /<repo>/).
+const BASE = import.meta.env.BASE_URL
+
 const LOCAL = {
-  wasm: '/mediapipe-wasm',
-  face: '/models/face_landmarker.task',
-  pose: '/models/pose_landmarker_lite.task',
+  wasm: `${BASE}mediapipe-wasm`,
+  face: `${BASE}models/face_landmarker.task`,
+  pose: `${BASE}models/pose_landmarker_lite.task`,
 }
 
 // Used only if the self-hosted copies are missing (see scripts/fetch-models.mjs).

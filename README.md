@@ -7,7 +7,14 @@ line of text. No sound, no score, no judgement.
 Frames are read and discarded in the tab. Nothing is uploaded, nothing is
 recorded, and there is no account.
 
-## Running it
+## Running it without installing anything
+
+Pushing to `claude/meditation-app-yx57dc` builds and publishes the app to GitHub
+Pages via `.github/workflows/deploy.yml`, at
+<https://bobby-sills.github.io/sit-still-webapp/>. That URL is HTTPS, which the
+camera requires, so it also works on a phone.
+
+## Running it locally
 
 ```sh
 npm install   # also fetches the two on-device vision models into public/
@@ -16,7 +23,11 @@ npm run dev
 
 `npm run build` produces a static site in `dist/`; anything that serves files
 will host it. The camera needs a secure context, so deploy over HTTPS
-(`localhost` is already treated as secure).
+(`localhost` is already treated as secure) — a LAN IP such as
+`http://192.168.1.5:5173` is not secure and the camera will not start there.
+
+To serve from a subpath, set `BASE_PATH` at build time
+(`BASE_PATH=/sit-still-webapp/ npm run build`); asset URLs are derived from it.
 
 ## How it works
 
