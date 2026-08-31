@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vite
+
+# Vision assets are fetched by scripts/fetch-models.mjs (postinstall), not committed.
+public/models/
+public/mediapipe-wasm/
