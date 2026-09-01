@@ -8,6 +8,7 @@ import { clearProgress, loadProgress, loadVoice, saveSession, saveVoice } from '
 import type { Minutes, NudgeVoice, Observation, Screen, SessionTotals } from './types'
 import { useIsDesktop } from './ui/useIsDesktop'
 import { useCalibration } from './vision/useCalibration'
+import { useCameraPermission } from './vision/useCameraPermission'
 import { useVision } from './vision/useVision'
 
 /**
@@ -26,6 +27,7 @@ const SECONDS_PER_MINUTE = (() => {
 export function App() {
   const desktop = useIsDesktop()
   const vision = useVision()
+  const cameraPermission = useCameraPermission()
 
   const [interrupted] = useState(loadProgress)
   const [resume, setResume] = useState(interrupted)
@@ -38,7 +40,8 @@ export function App() {
   const [reacquiring, setReacquiring] = useState(Boolean(interrupted?.totals.monitored))
 
   const calibration = useCalibration(vision, screen === 'calibrate')
-  const observation = useObservation(vision, screen === 'session' && monitored)
+  const previewLive = screen === 'home' && vision.status === 'ready'
+  const observation = useObservation(vision, (screen === 'session' && monitored) || previewLive)
 
   const { setBaseline, start, stop } = vision
 
@@ -58,6 +61,12 @@ export function App() {
       cancelled = true
     }
   }, [interrupted, start, setBaseline])
+
+  // Home shows a live preview only where the camera is already allowed, so
+  // opening the page never raises a permission prompt on its own.
+  useEffect(() => {
+    if (screen === 'home' && cameraPermission === 'granted') void start()
+  }, [screen, cameraPermission, start])
 
   const handleComplete = useCallback(
     (finalTotals: SessionTotals, startedAt: number) => {
@@ -109,8 +118,10 @@ export function App() {
   const goHome = useCallback(() => {
     setTotals(null)
     setScreen('home')
-    stop()
-  }, [stop])
+    // Where home will show a preview, keep the stream rather than stopping it
+    // only to reacquire the camera and reload the models a moment later.
+    if (cameraPermission !== 'granted') stop()
+  }, [stop, cameraPermission])
 
   if (screen === 'session' && reacquiring) {
     return <div className={shellClass(desktop)} />
@@ -127,7 +138,8 @@ export function App() {
           onVoice={chooseVoice}
           onBegin={beginCalibration}
           videoRef={vision.videoRef}
-          previewLive={vision.status === 'ready'}
+          previewLive={previewLive}
+          observation={observation}
         />
       )}
 

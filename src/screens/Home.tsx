@@ -1,5 +1,5 @@
 import { CameraPanel } from '../components/CameraPanel'
-import type { Minutes, NudgeVoice } from '../types'
+import type { Minutes, NudgeVoice, Observation } from '../types'
 
 const DURATIONS: Minutes[] = [5, 10, 20]
 const VOICES: NudgeVoice[] = ['minimal', 'poetic']
@@ -12,7 +12,13 @@ type Props = {
   onVoice: (voice: NudgeVoice) => void
   onBegin: () => void
   videoRef: React.RefCallback<HTMLVideoElement>
+  /**
+   * Only true once a stream is actually running. There is no placeholder
+   * preview: a striped panel that never resolves into a picture reads as
+   * broken, so when the camera is not already allowed the panel is absent.
+   */
   previewLive: boolean
+  observation: Observation | null
 }
 
 export function Home({
@@ -24,6 +30,7 @@ export function Home({
   onBegin,
   videoRef,
   previewLive,
+  observation,
 }: Props) {
   const lead = (
     <div className="home__lead">
@@ -98,15 +105,20 @@ export function Home({
           {foot}
         </div>
         <aside className="home__aside">
-          <div className="mono">camera — preview only</div>
-          <CameraPanel
-            videoRef={videoRef}
-            live={previewLive}
-            caption="camera feed"
-            showOval
-            ovalSize={{ width: 92, height: 120 }}
-            className="home__feed"
-          />
+          {previewLive && (
+            <>
+              <div className="mono">camera — preview only</div>
+              <CameraPanel
+                videoRef={videoRef}
+                live
+                caption="camera feed"
+                observation={observation}
+                showOval
+                ovalSize={{ width: 92, height: 120 }}
+                className="home__feed"
+              />
+            </>
+          )}
           <p className="home__privacy">
             Frames are read and discarded in the tab. No upload, no recording, no account.
           </p>
