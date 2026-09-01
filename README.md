@@ -1,8 +1,9 @@
 # Still
 
-A meditation timer that uses the camera to notice when you drift — eyes opening,
-shoulders folding forward, a body leaving the frame — and answers with one quiet
-line of text. No sound, no score, no judgement.
+A meditation timer that uses the camera to notice when your attention drifts.
+When it wanders the body tends to show it — eyes opening, shoulders folding
+forward, a body leaving the frame — and the app answers with one quiet line of
+text that brings you back. No sound, no score, no judgement.
 
 Frames are read and discarded in the tab. Nothing is uploaded, nothing is
 recorded, and there is no account.

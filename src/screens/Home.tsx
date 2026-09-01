@@ -34,11 +34,11 @@ export function Home({
 }: Props) {
   const lead = (
     <div className="home__lead">
-      <h1 className="home__headline">Sit. The camera watches so you don't have to.</h1>
+      <h1 className="home__headline">Meditate. The camera watches so you don't have to.</h1>
       <p className="home__sub">
         {desktop
-          ? 'Eyes open, shoulders creeping forward, a body drifting out of frame — a quiet word on screen, nothing more.'
-          : 'Eyes open, shoulders forward, a body drifting away — a quiet word, nothing more. Nothing leaves the device.'}
+          ? 'Attention wanders and the body shows it — eyes opening, shoulders creeping forward. A quiet word on screen brings you back, nothing more.'
+          : 'Attention wanders and the body shows it — eyes opening, shoulders folding. A quiet word brings you back. Nothing leaves the device.'}
       </p>
     </div>
   )

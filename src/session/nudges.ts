@@ -33,5 +33,5 @@ export function signalLabel(signal: Signal): string {
 export function closingLine(nudges: number, settledFraction: number): string {
   if (nudges === 0) return 'Nothing needed saying. The camera stayed quiet the whole way through.'
   if (settledFraction > 0.9) return 'A few small drifts, caught early. Mostly you were here.'
-  return 'The body wandered more than usual. Tomorrow, sit a little closer to the wall.'
+  return 'The mind wandered more than usual, and the body with it. Tomorrow, begin again.'
 }

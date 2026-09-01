@@ -27,7 +27,7 @@ export function Complete({ desktop, totals, onDone }: Props) {
   const count = (
     <div className="complete__count">
       <div className="complete__count-value">{minutesSat(totals.seconds)}</div>
-      <div className="complete__count-label">minutes sat</div>
+      <div className="complete__count-label">minutes meditated</div>
     </div>
   )
 
@@ -45,7 +45,7 @@ export function Complete({ desktop, totals, onDone }: Props) {
     <p className="complete__closing">
       {totals.monitored
         ? closingLine(totals.nudges, pct.settled)
-        : 'No camera, no notes. Only the sitting, which was the point.'}
+        : 'No camera, no notes. Only the practice, which was the point.'}
     </p>
   )
 
@@ -58,7 +58,7 @@ export function Complete({ desktop, totals, onDone }: Props) {
   if (!desktop) {
     return (
       <div className="screen screen--complete">
-        <div className="eyebrow">this sit</div>
+        <div className="eyebrow">this meditation</div>
         <div className="complete">
           {count}
           {timeline}
@@ -72,7 +72,7 @@ export function Complete({ desktop, totals, onDone }: Props) {
 
   return (
     <div className="screen screen--complete">
-      <div className="eyebrow">this sit</div>
+      <div className="eyebrow">this meditation</div>
       <div className="complete">
         <div className="complete__left">
           {count}

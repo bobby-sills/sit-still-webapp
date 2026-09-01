@@ -6,9 +6,9 @@ const STEPS = ['face in frame', 'shoulder line noted', 'eyes closed — baseline
 
 /** What to say when the camera cannot be used, without making it feel like a failure. */
 const UNAVAILABLE: Partial<Record<VisionStatus, string>> = {
-  denied: 'The camera stayed shut. That is a fine way to sit — the timer works either way.',
-  unsupported: 'No camera here. That is a fine way to sit — the timer works either way.',
-  error: 'The camera could not be read. That is a fine way to sit — the timer works either way.',
+  denied: 'The camera stayed shut. That is a fine way to meditate — the timer works either way.',
+  unsupported: 'No camera here. That is a fine way to meditate — the timer works either way.',
+  error: 'The camera could not be read. That is a fine way to meditate — the timer works either way.',
 }
 
 type Props = {
@@ -60,7 +60,7 @@ export function Calibrate({
 
   const action = unavailable ? (
     <button type="button" className="btn" onClick={onSitWithoutCamera}>
-      sit without the camera
+      without the camera
     </button>
   ) : (
     <div className={`calibrate__ready${ready ? ' is-ready' : ''}`}>
