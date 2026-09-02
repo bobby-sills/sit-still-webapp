@@ -42,6 +42,8 @@ export type SessionEngineOptions = {
   /** A sit interrupted by a reload, picked up where it left off. */
   resume: Progress | null
   onComplete: (totals: SessionTotals, startedAt: number) => void
+  /** Fires as a nudge appears, so it can be sounded as well as shown. */
+  onNudge: (signal: Exclude<Signal, 'settled'>) => void
 }
 
 type Episode = {
@@ -66,6 +68,7 @@ export function useSessionEngine(options: SessionEngineOptions): {
     baselineRef,
     resume,
     onComplete,
+    onNudge,
   } = options
 
   const total = minutes * secondsPerMinute
@@ -88,8 +91,8 @@ export function useSessionEngine(options: SessionEngineOptions): {
   const finishedRef = useRef(false)
 
   // Read through refs so the animation frame never closes over stale props.
-  const latest = useRef({ voice, monitored, patienceSeconds, total, secondsPerMinute, onComplete })
-  latest.current = { voice, monitored, patienceSeconds, total, secondsPerMinute, onComplete }
+  const latest = useRef({ voice, monitored, patienceSeconds, total, secondsPerMinute, onComplete, onNudge })
+  latest.current = { voice, monitored, patienceSeconds, total, secondsPerMinute, onComplete, onNudge }
 
   const finish = useCallback(() => {
     if (finishedRef.current) return
@@ -186,6 +189,9 @@ export function useSessionEngine(options: SessionEngineOptions): {
           episode.nudged = true
           nudgeRef.current = { text: nudgeFor(opts.voice, signal), shownAt: now }
           totals.nudges += 1
+          // The text is unreadable to someone sitting with their eyes shut, so
+          // the sound is the part that actually lands.
+          opts.onNudge(signal)
         }
       }
 

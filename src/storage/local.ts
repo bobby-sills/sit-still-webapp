@@ -8,6 +8,7 @@ import type { Baseline, Minutes, NudgeVoice, SessionRecord, SessionTotals } from
 const HISTORY_KEY = 'still.history.v1'
 const PROGRESS_KEY = 'still.progress.v1'
 const VOICE_KEY = 'still.voice.v1'
+const SOUND_KEY = 'still.sound.v1'
 const HISTORY_LIMIT = 200
 
 /** An interrupted sit older than this is not worth resuming into. */
@@ -86,4 +87,13 @@ export function loadVoice(): NudgeVoice {
 
 export function saveVoice(voice: NudgeVoice): void {
   write(VOICE_KEY, voice)
+}
+
+/** Sound is on by default: without it a sit with the eyes shut gives no cues. */
+export function loadSound(): boolean {
+  return read<boolean>(SOUND_KEY) !== false
+}
+
+export function saveSound(enabled: boolean): void {
+  write(SOUND_KEY, enabled)
 }

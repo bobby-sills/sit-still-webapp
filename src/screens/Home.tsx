@@ -10,6 +10,8 @@ type Props = {
   onMinutes: (minutes: Minutes) => void
   voice: NudgeVoice
   onVoice: (voice: NudgeVoice) => void
+  sound: boolean
+  onSound: (enabled: boolean) => void
   onBegin: () => void
   videoRef: React.RefCallback<HTMLVideoElement>
   /**
@@ -27,6 +29,8 @@ export function Home({
   onMinutes,
   voice,
   onVoice,
+  sound,
+  onSound,
   onBegin,
   videoRef,
   previewLive,
@@ -60,8 +64,8 @@ export function Home({
         ))}
         <div className="durations__unit">min</div>
       </div>
-      <div className="voice" role="group" aria-label="Reminder voice">
-        <div className="voice__options">
+      <div className="voice">
+        <div className="voice__options" role="group" aria-label="Reminder voice">
           {VOICES.map((option) => (
             <button
               type="button"
@@ -74,6 +78,16 @@ export function Home({
             </button>
           ))}
         </div>
+        {/* Sound carries the session with the eyes shut, so it is on by
+            default — but a shared room is reason enough to turn it off. */}
+        <button
+          type="button"
+          className={`voice__option${sound ? ' is-selected' : ''}`}
+          aria-pressed={sound}
+          onClick={() => onSound(!sound)}
+        >
+          {sound ? 'sound on' : 'sound off'}
+        </button>
       </div>
       <button type="button" className="btn home__begin" onClick={onBegin}>
         begin

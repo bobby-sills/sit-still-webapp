@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Baseline, Observation, Signal } from '../types'
+
+/** The posture half of a baseline, captured during framing. */
+export type PostureBaseline = { shoulderY: number; headY: number }
 import { Detector } from './detector'
 import { SignalSmoother, rawVerdict } from './verdict'
 
@@ -20,16 +23,29 @@ const STALE_GAP_MS = 1000
 export type Vision = {
   status: VisionStatus
   /**
-   * A callback ref: the <video> element is remounted as screens change, so the
-   * stream is re-attached to whichever element is currently on screen.
+   * The element detection reads from. It is mounted once, for the life of the
+   * app, and kept off screen: screens that show no camera panel — the whole
+   * mobile session — must still be watched.
    */
   videoRef: React.RefCallback<HTMLVideoElement>
+  /**
+   * A second element, for screens that actually show the feed. Sharing one
+   * stream between the two costs a decode but keeps detection independent of
+   * whatever the layout happens to be displaying.
+   */
+  previewRef: React.RefCallback<HTMLVideoElement>
   observationRef: React.RefObject<Observation | null>
   signalRef: React.RefObject<Signal>
   baselineRef: React.RefObject<Baseline | null>
+  /**
+   * Shoulders and head, fixed during framing. The eye half of the baseline is
+   * captured later, as the sit begins and the eyes actually close.
+   */
+  postureRef: React.RefObject<PostureBaseline | null>
   start: () => Promise<VisionStatus>
   stop: () => void
   setBaseline: (baseline: Baseline | null) => void
+  setPosture: (posture: PostureBaseline | null) => void
   resetSmoother: () => void
 }
 
@@ -46,15 +62,28 @@ export function useVision(): Vision {
   const observationRef = useRef<Observation | null>(null)
   const signalRef = useRef<Signal>('settled')
   const baselineRef = useRef<Baseline | null>(null)
+  const postureRef = useRef<PostureBaseline | null>(null)
 
-  const attachVideo = useCallback<React.RefCallback<HTMLVideoElement>>((element) => {
-    videoRef.current = element
+  const attach = (element: HTMLVideoElement | null) => {
     if (element && streamRef.current && element.srcObject !== streamRef.current) {
       element.srcObject = streamRef.current
       void element.play().catch(() => undefined)
     }
+  }
+
+  const attachVideo = useCallback<React.RefCallback<HTMLVideoElement>>((element) => {
+    videoRef.current = element
+    attach(element)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const attachPreview = useCallback<React.RefCallback<HTMLVideoElement>>((element) => {
+    previewRef.current = element
+    attach(element)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const previewRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const detectorRef = useRef<Detector | null>(null)
   const smootherRef = useRef(new SignalSmoother())
@@ -98,6 +127,7 @@ export function useVision(): Vision {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     if (videoRef.current) videoRef.current.srcObject = null
+    if (previewRef.current) previewRef.current.srcObject = null
     observationRef.current = null
     signalRef.current = 'settled'
     smootherRef.current.reset()
@@ -139,10 +169,10 @@ export function useVision(): Vision {
 
       try {
         streamRef.current = stream
-        const video = videoRef.current
-        if (video) {
-          video.srcObject = stream
-          await video.play().catch(() => undefined)
+        for (const element of [videoRef.current, previewRef.current]) {
+          if (!element) continue
+          element.srcObject = stream
+          await element.play().catch(() => undefined)
         }
         detectorRef.current = await Detector.create()
       } catch {
@@ -171,6 +201,10 @@ export function useVision(): Vision {
     smootherRef.current.reset()
   }, [])
 
+  const setPosture = useCallback((posture: PostureBaseline | null) => {
+    postureRef.current = posture
+  }, [])
+
   const resetSmoother = useCallback(() => smootherRef.current.reset(), [])
 
   useEffect(() => stop, [stop])
@@ -178,12 +212,15 @@ export function useVision(): Vision {
   return {
     status,
     videoRef: attachVideo,
+    previewRef: attachPreview,
     observationRef,
     signalRef,
     baselineRef,
+    postureRef,
     start,
     stop,
     setBaseline,
+    setPosture,
     resetSmoother,
   }
 }

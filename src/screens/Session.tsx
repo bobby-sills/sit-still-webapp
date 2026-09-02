@@ -9,12 +9,22 @@ type Props = {
   display: SessionDisplay
   /** False when the sit is running without the camera; the indicator goes away. */
   monitored: boolean
+  /** Waiting at the starting line for the eyes to close; the clock is not running. */
+  awaitingEyes: boolean
   observation: Observation | null
   videoRef: React.RefCallback<HTMLVideoElement>
   onEnd: () => void
 }
 
-export function Session({ desktop, display, monitored, observation, videoRef, onEnd }: Props) {
+export function Session({
+  desktop,
+  display,
+  monitored,
+  awaitingEyes,
+  observation,
+  videoRef,
+  onEnd,
+}: Props) {
   return (
     <div className="screen screen--session">
       <div className="session">
@@ -22,7 +32,7 @@ export function Session({ desktop, display, monitored, observation, videoRef, on
           {monitored && (
             <>
               <div className="session__status-dot" />
-              <div className="mono">watching</div>
+              <div className="mono">{awaitingEyes ? 'waiting' : 'watching'}</div>
             </>
           )}
         </div>
@@ -42,10 +52,12 @@ export function Session({ desktop, display, monitored, observation, videoRef, on
           <div className="session__nudge">
             {/* Held in the DOM at all times so its height never shifts the screen. */}
             <div
-              className={`session__nudge-text${display.nudgeVisible ? ' is-visible' : ''}`}
+              className={`session__nudge-text${
+                awaitingEyes || display.nudgeVisible ? ' is-visible' : ''
+              }`}
               aria-live="polite"
             >
-              {display.nudgeText}
+              {awaitingEyes ? 'close your eyes to begin' : display.nudgeText}
             </div>
           </div>
         </div>
@@ -56,7 +68,9 @@ export function Session({ desktop, display, monitored, observation, videoRef, on
           </button>
           {monitored && (
             <div className="session__watch">
-              <div className="session__signal">{signalLabel(display.signal)}</div>
+              <div className="session__signal">
+                {awaitingEyes ? 'not started' : signalLabel(display.signal)}
+              </div>
               {desktop && (
                 <CameraPanel
                   videoRef={videoRef}

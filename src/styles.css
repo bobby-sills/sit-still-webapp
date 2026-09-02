@@ -336,7 +336,7 @@ body {
 .voice {
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  gap: 26px;
 }
 
 .voice__options {
@@ -464,6 +464,19 @@ body {
   color: var(--t35);
   text-wrap: pretty;
   margin: 0;
+}
+
+/* The element detection reads from. Kept in the layout but effectively
+   invisible: a display:none video is not guaranteed to keep decoding frames. */
+.detector-video {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* --------------------------------------------------------------------------- */

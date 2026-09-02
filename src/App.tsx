@@ -1,14 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Calibrate } from './screens/Calibrate'
 import { Complete } from './screens/Complete'
 import { Home } from './screens/Home'
 import { Session } from './screens/Session'
+import { Chimes } from './session/sounds'
 import { useSessionEngine } from './session/useSessionEngine'
-import { clearProgress, loadProgress, loadVoice, saveSession, saveVoice } from './storage/local'
-import type { Minutes, NudgeVoice, Observation, Screen, SessionTotals } from './types'
+import {
+  clearProgress,
+  loadProgress,
+  loadSound,
+  loadVoice,
+  saveSession,
+  saveSound,
+  saveVoice,
+} from './storage/local'
+import type { Minutes, NudgeVoice, Observation, Screen, SessionTotals, Signal } from './types'
 import { useIsDesktop } from './ui/useIsDesktop'
 import { useCalibration } from './vision/useCalibration'
 import { useCameraPermission } from './vision/useCameraPermission'
+import { useEyesClosedGate } from './vision/useEyesClosedGate'
 import { useVision } from './vision/useVision'
 
 /**
@@ -36,8 +46,25 @@ export function App() {
   const [voice, setVoice] = useState<NudgeVoice>(interrupted?.voice ?? loadVoice)
   const [monitored, setMonitored] = useState(false)
   const [totals, setTotals] = useState<SessionTotals | null>(null)
+  const [sound, setSound] = useState(loadSound)
+  /**
+   * A monitored sit waits at its starting line until the eyes close, rather
+   * than making someone set an eye baseline they cannot see the result of.
+   */
+  const [awaitingEyes, setAwaitingEyes] = useState(false)
   // A monitored sit picked up after a reload has to reacquire the camera first.
   const [reacquiring, setReacquiring] = useState(Boolean(interrupted?.totals.monitored))
+
+  const chimes = useMemo(() => new Chimes(), [])
+  useEffect(() => chimes.setEnabled(sound), [chimes, sound])
+  useEffect(() => () => chimes.close(), [chimes])
+
+  const beginTimer = useCallback(() => {
+    setAwaitingEyes(false)
+    chimes.play('start')
+  }, [chimes])
+
+  useEyesClosedGate(vision, screen === 'session' && awaitingEyes, beginTimer)
 
   const calibration = useCalibration(vision, screen === 'calibrate')
   const previewLive = screen === 'home' && vision.status === 'ready'
@@ -71,17 +98,23 @@ export function App() {
   const handleComplete = useCallback(
     (finalTotals: SessionTotals, startedAt: number) => {
       saveSession({ ...finalTotals, startedAt })
+      chimes.play('end')
       setTotals(finalTotals)
       setResume(null)
       setScreen('complete')
       // The sit is over, so the camera goes off — visibly, at the hardware light.
       stop()
     },
-    [stop],
+    [stop, chimes],
+  )
+
+  const onNudge = useCallback(
+    (signal: Exclude<Signal, 'settled'>) => chimes.play(signal),
+    [chimes],
   )
 
   const engine = useSessionEngine({
-    active: screen === 'session' && !reacquiring,
+    active: screen === 'session' && !reacquiring && !awaitingEyes,
     minutes,
     voice,
     monitored,
@@ -91,23 +124,30 @@ export function App() {
     baselineRef: vision.baselineRef,
     resume,
     onComplete: handleComplete,
+    onNudge,
   })
 
   const beginCalibration = useCallback(() => {
+    // Audio has to be armed inside a real gesture or the first cue is swallowed.
+    chimes.unlock()
     clearProgress()
     setResume(null)
     setBaseline(null)
     setScreen('calibrate')
     void start()
-  }, [setBaseline, start])
+  }, [setBaseline, start, chimes])
 
   const beginSession = useCallback(
     (watched: boolean) => {
+      chimes.unlock()
       setMonitored(watched)
       setResume(null)
       setScreen('session')
+      // Unwatched, there is nothing to wait for, so the sit starts at once.
+      setAwaitingEyes(watched)
+      if (!watched) chimes.play('start')
     },
-    [],
+    [chimes],
   )
 
   const chooseVoice = useCallback((next: NudgeVoice) => {
@@ -115,8 +155,18 @@ export function App() {
     saveVoice(next)
   }, [])
 
+  const chooseSound = useCallback(
+    (next: boolean) => {
+      setSound(next)
+      saveSound(next)
+      if (next) chimes.unlock()
+    },
+    [chimes],
+  )
+
   const goHome = useCallback(() => {
     setTotals(null)
+    setAwaitingEyes(false)
     setScreen('home')
     // Where home will show a preview, keep the stream rather than stopping it
     // only to reacquire the camera and reload the models a moment later.
@@ -124,11 +174,20 @@ export function App() {
   }, [stop, cameraPermission])
 
   if (screen === 'session' && reacquiring) {
-    return <div className={shellClass(desktop)} />
+    return (
+      <div className={shellClass(desktop)}>
+        <video ref={vision.videoRef} className="detector-video" playsInline muted autoPlay />
+      </div>
+    )
   }
 
   return (
     <div className={shellClass(desktop)}>
+      {/* Detection reads from this element on every screen, including the ones
+          that show no camera panel at all. It must never unmount while a sit
+          is being watched. */}
+      <video ref={vision.videoRef} className="detector-video" playsInline muted autoPlay />
+
       {screen === 'home' && (
         <Home
           desktop={desktop}
@@ -136,8 +195,10 @@ export function App() {
           onMinutes={setMinutes}
           voice={voice}
           onVoice={chooseVoice}
+          sound={sound}
+          onSound={chooseSound}
           onBegin={beginCalibration}
-          videoRef={vision.videoRef}
+          videoRef={vision.previewRef}
           previewLive={previewLive}
           observation={observation}
         />
@@ -149,7 +210,7 @@ export function App() {
           status={vision.status}
           step={calibration.step}
           observation={calibration.observation}
-          videoRef={vision.videoRef}
+          videoRef={vision.previewRef}
           onStart={() => beginSession(true)}
           onSitWithoutCamera={() => beginSession(false)}
         />
@@ -160,8 +221,9 @@ export function App() {
           desktop={desktop}
           display={engine.display}
           monitored={monitored}
+          awaitingEyes={awaitingEyes}
           observation={observation}
-          videoRef={vision.videoRef}
+          videoRef={vision.previewRef}
           onEnd={engine.end}
         />
       )}

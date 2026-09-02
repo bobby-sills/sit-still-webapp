@@ -2,7 +2,7 @@ import { CameraPanel } from '../components/CameraPanel'
 import type { Observation } from '../types'
 import type { VisionStatus } from '../vision/useVision'
 
-const STEPS = ['face in frame', 'shoulder line noted', 'eyes closed — baseline set']
+const STEPS = ['face in frame', 'shoulder line noted']
 
 /** What to say when the camera cannot be used, without making it feel like a failure. */
 const UNAVAILABLE: Partial<Record<VisionStatus, string>> = {
@@ -31,7 +31,7 @@ export function Calibrate({
   onSitWithoutCamera,
 }: Props) {
   const unavailable = UNAVAILABLE[status]
-  const ready = step >= 3
+  const ready = step >= 2
 
   const panel = (
     <CameraPanel
@@ -65,7 +65,7 @@ export function Calibrate({
   ) : (
     <div className={`calibrate__ready${ready ? ' is-ready' : ''}`}>
       <button type="button" className="btn" onClick={onStart} disabled={!ready}>
-        close your eyes
+        start
       </button>
     </div>
   )
