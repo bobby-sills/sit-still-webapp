@@ -55,7 +55,8 @@ const NUDGE_GAIN = 0.7
 
 type AudioContextCtor = typeof AudioContext
 
-function audioContextCtor(): AudioContextCtor | null {
+/** Shared with the voice, which unlocks under the same rules. */
+export function audioContextCtor(): AudioContextCtor | null {
   if (typeof window === 'undefined') return null
   const w = window as unknown as {
     AudioContext?: AudioContextCtor

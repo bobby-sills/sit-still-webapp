@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Baseline, Minutes, NudgeVoice, SessionTotals, Signal } from '../types'
-import { nudgeFor } from './nudges'
+import type { Baseline, Minutes, SessionTotals, Signal } from '../types'
+import { nudgeFor, type NudgeLine } from './nudges'
 import { BUCKET_COUNT, emptyBuckets } from './summary'
 import { clearProgress, saveProgress, type Progress } from '../storage/local'
 
@@ -27,7 +27,6 @@ export type SessionDisplay = {
 export type SessionEngineOptions = {
   active: boolean
   minutes: Minutes
-  voice: NudgeVoice
   monitored: boolean
   /**
    * How long a problem must persist before it is worth saying anything. The
@@ -42,8 +41,11 @@ export type SessionEngineOptions = {
   /** A sit interrupted by a reload, picked up where it left off. */
   resume: Progress | null
   onComplete: (totals: SessionTotals, startedAt: number) => void
-  /** Fires as a nudge appears, so it can be sounded as well as shown. */
-  onNudge: (signal: Exclude<Signal, 'settled'>) => void
+  /**
+    * Fires as a nudge appears, so it can be sounded as well as shown. The line
+    * is passed along because the screen and the voice must say the same thing.
+    */
+  onNudge: (signal: Exclude<Signal, 'settled'>, line: NudgeLine) => void
 }
 
 type Episode = {
@@ -60,7 +62,6 @@ export function useSessionEngine(options: SessionEngineOptions): {
   const {
     active,
     minutes,
-    voice,
     monitored,
     patienceSeconds,
     secondsPerMinute,
@@ -91,8 +92,8 @@ export function useSessionEngine(options: SessionEngineOptions): {
   const finishedRef = useRef(false)
 
   // Read through refs so the animation frame never closes over stale props.
-  const latest = useRef({ voice, monitored, patienceSeconds, total, secondsPerMinute, onComplete, onNudge })
-  latest.current = { voice, monitored, patienceSeconds, total, secondsPerMinute, onComplete, onNudge }
+  const latest = useRef({ monitored, patienceSeconds, total, secondsPerMinute, onComplete, onNudge })
+  latest.current = { monitored, patienceSeconds, total, secondsPerMinute, onComplete, onNudge }
 
   const finish = useCallback(() => {
     if (finishedRef.current) return
@@ -187,11 +188,12 @@ export function useSessionEngine(options: SessionEngineOptions): {
           episodeRef.current = { kind: signal, startedAt: now, nudged: false }
         } else if (!episode.nudged && now - episode.startedAt >= opts.patienceSeconds * 1000) {
           episode.nudged = true
-          nudgeRef.current = { text: nudgeFor(opts.voice, signal), shownAt: now }
+          const line = nudgeFor(signal)
+          nudgeRef.current = { text: line.text, shownAt: now }
           totals.nudges += 1
           // The text is unreadable to someone sitting with their eyes shut, so
           // the sound is the part that actually lands.
-          opts.onNudge(signal)
+          opts.onNudge(signal, line)
         }
       }
 
@@ -211,7 +213,6 @@ export function useSessionEngine(options: SessionEngineOptions): {
         const progress: Omit<Progress, 'savedAt'> = {
           startedAt: startedAtRef.current,
           minutes,
-          voice: opts.voice,
           elapsed: (elapsed / opts.secondsPerMinute) * 60,
           totals: { ...totals, seconds: (elapsed / opts.secondsPerMinute) * 60 },
           baseline: baselineRef.current,

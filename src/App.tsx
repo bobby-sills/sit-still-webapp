@@ -3,8 +3,10 @@ import { Calibrate } from './screens/Calibrate'
 import { Complete } from './screens/Complete'
 import { Home } from './screens/Home'
 import { Session } from './screens/Session'
+import { BEGIN_FILE, END_FILE, type NudgeLine } from './session/nudges'
 import { Chimes } from './session/sounds'
 import { useSessionEngine } from './session/useSessionEngine'
+import { AFTER_END_CHIME, AFTER_NUDGE_CHIME, Voice } from './session/voice'
 import {
   clearProgress,
   loadProgress,
@@ -14,7 +16,7 @@ import {
   saveSound,
   saveVoice,
 } from './storage/local'
-import type { Minutes, NudgeVoice, Observation, Screen, SessionTotals, Signal } from './types'
+import type { Minutes, Observation, Screen, SessionTotals, Signal } from './types'
 import { useIsDesktop } from './ui/useIsDesktop'
 import { useCalibration } from './vision/useCalibration'
 import { useCameraPermission } from './vision/useCameraPermission'
@@ -43,10 +45,10 @@ export function App() {
   const [resume, setResume] = useState(interrupted)
   const [screen, setScreen] = useState<Screen>(interrupted ? 'session' : 'home')
   const [minutes, setMinutes] = useState<Minutes>(interrupted?.minutes ?? 10)
-  const [voice, setVoice] = useState<NudgeVoice>(interrupted?.voice ?? loadVoice)
   const [monitored, setMonitored] = useState(false)
   const [totals, setTotals] = useState<SessionTotals | null>(null)
   const [sound, setSound] = useState(loadSound)
+  const [voiceOn, setVoiceOn] = useState(loadVoice)
   /**
    * A monitored sit waits at its starting line until the eyes close, rather
    * than making someone set an eye baseline they cannot see the result of.
@@ -58,6 +60,10 @@ export function App() {
   const chimes = useMemo(() => new Chimes(), [])
   useEffect(() => chimes.setEnabled(sound), [chimes, sound])
   useEffect(() => () => chimes.close(), [chimes])
+
+  const voice = useMemo(() => new Voice(), [])
+  useEffect(() => voice.setEnabled(voiceOn), [voice, voiceOn])
+  useEffect(() => () => voice.close(), [voice])
 
   const beginTimer = useCallback(() => {
     setAwaitingEyes(false)
@@ -99,24 +105,28 @@ export function App() {
     (finalTotals: SessionTotals, startedAt: number) => {
       saveSession({ ...finalTotals, startedAt })
       chimes.play('end')
+      // The bell rings out before the words, rather than over them.
+      voice.play(END_FILE, sound ? AFTER_END_CHIME : 0)
       setTotals(finalTotals)
       setResume(null)
       setScreen('complete')
       // The sit is over, so the camera goes off — visibly, at the hardware light.
       stop()
     },
-    [stop, chimes],
+    [stop, chimes, voice, sound],
   )
 
   const onNudge = useCallback(
-    (signal: Exclude<Signal, 'settled'>) => chimes.play(signal),
-    [chimes],
+    (signal: Exclude<Signal, 'settled'>, line: NudgeLine) => {
+      chimes.play(signal)
+      voice.play(line.file, sound ? AFTER_NUDGE_CHIME : 0)
+    },
+    [chimes, voice, sound],
   )
 
   const engine = useSessionEngine({
     active: screen === 'session' && !reacquiring && !awaitingEyes,
     minutes,
-    voice,
     monitored,
     patienceSeconds: PATIENCE_SECONDS,
     secondsPerMinute: SECONDS_PER_MINUTE,
@@ -129,31 +139,30 @@ export function App() {
 
   const beginCalibration = useCallback(() => {
     // Audio has to be armed inside a real gesture or the first cue is swallowed.
+    // This is also where the spoken lines start loading; framing buys the time.
     chimes.unlock()
+    voice.unlock()
     clearProgress()
     setResume(null)
     setBaseline(null)
     setScreen('calibrate')
     void start()
-  }, [setBaseline, start, chimes])
+  }, [setBaseline, start, chimes, voice])
 
   const beginSession = useCallback(
     (watched: boolean) => {
       chimes.unlock()
+      voice.unlock()
       setMonitored(watched)
       setResume(null)
       setScreen('session')
       // Unwatched, there is nothing to wait for, so the sit starts at once.
       setAwaitingEyes(watched)
-      if (!watched) chimes.play('start')
+      if (watched) voice.play(BEGIN_FILE)
+      else chimes.play('start')
     },
-    [chimes],
+    [chimes, voice],
   )
-
-  const chooseVoice = useCallback((next: NudgeVoice) => {
-    setVoice(next)
-    saveVoice(next)
-  }, [])
 
   const chooseSound = useCallback(
     (next: boolean) => {
@@ -162,6 +171,16 @@ export function App() {
       if (next) chimes.unlock()
     },
     [chimes],
+  )
+
+  const chooseVoice = useCallback(
+    (next: boolean) => {
+      setVoiceOn(next)
+      saveVoice(next)
+      // Turning it on here starts the download, well before it is needed.
+      if (next) voice.unlock()
+    },
+    [voice],
   )
 
   const goHome = useCallback(() => {
@@ -193,10 +212,10 @@ export function App() {
           desktop={desktop}
           minutes={minutes}
           onMinutes={setMinutes}
-          voice={voice}
-          onVoice={chooseVoice}
           sound={sound}
           onSound={chooseSound}
+          voice={voiceOn}
+          onVoice={chooseVoice}
           onBegin={beginCalibration}
           videoRef={vision.previewRef}
           previewLive={previewLive}

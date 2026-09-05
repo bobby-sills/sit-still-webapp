@@ -28,14 +28,9 @@ export function Session({
   return (
     <div className="screen screen--session">
       <div className="session">
-        <div className="session__status">
-          {monitored && (
-            <>
-              <div className="session__status-dot" />
-              <div className="mono">{awaitingEyes ? 'waiting' : 'watching'}</div>
-            </>
-          )}
-        </div>
+        {/* Nothing is said about the camera any more; this only holds the
+            space above, so the countdown sits where it always has. */}
+        <div className="session__status" />
 
         <div className="session__body">
           <div className="session__stack">

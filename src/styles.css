@@ -29,7 +29,9 @@
   --button: rgba(255, 255, 255, 0.35);
   --button-soft: rgba(255, 255, 255, 0.22);
 
-  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Inter is loaded in index.html; the rest is what stands in while it
+     arrives, and if it never does. */
+  --sans: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: ui-monospace, Menlo, Monaco, "Courier New", monospace;
 
   --countdown: var(--t55);
@@ -81,16 +83,6 @@ body {
   }
   to {
     opacity: 1;
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.22;
-  }
-  50% {
-    opacity: 0.65;
   }
 }
 
@@ -150,6 +142,9 @@ body {
 
 /* --------------------------------------------------------------------------- */
 /* Type primitives                                                              */
+/*                                                                              */
+/* 11px is the floor. These labels are uppercase and widely tracked, which at    */
+/* the 9-10px they used to be was unreadable on a phone.                         */
 /* --------------------------------------------------------------------------- */
 
 .eyebrow {
@@ -160,7 +155,7 @@ body {
 }
 
 .label {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--t30);
@@ -168,14 +163,6 @@ body {
 
 .app.is-desktop .label {
   letter-spacing: 0.3em;
-}
-
-.mono {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--t30);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -239,7 +226,7 @@ body {
   font-family: inherit;
   cursor: pointer;
   color: var(--t28);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.26em;
   text-transform: uppercase;
   transition: color 0.4s ease;
@@ -299,7 +286,10 @@ body {
 
 .durations {
   display: flex;
-  gap: 26px;
+  /* Four presets, a typed one and the unit is a lot for a 390px row: tighter
+     than the rest of the screen, and allowed to wrap rather than overflow. */
+  gap: 20px;
+  flex-wrap: wrap;
   align-items: baseline;
 }
 
@@ -322,6 +312,28 @@ body {
   color: var(--t100);
 }
 
+/* A typed length wears the same numerals as the presets, in a field that grows
+   with what is in it rather than reserving room for three digits. */
+.duration--custom {
+  min-width: 1ch;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.duration--custom::-webkit-outer-spin-button,
+.duration--custom::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* The way in to a typed length: a word, kept quiet beside the numerals. */
+.duration--other {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
 .durations__unit {
   font-size: 11px;
   color: var(--t30);
@@ -332,25 +344,20 @@ body {
   margin-top: 14px;
 }
 
-/* Voice is a real setting, kept as quiet as the rest of the screen. */
-.voice {
+/* Settings are real, and kept as quiet as the rest of the screen. */
+.settings {
   display: flex;
   align-items: baseline;
   gap: 26px;
 }
 
-.voice__options {
-  display: flex;
-  gap: 14px;
-}
-
-.voice__option {
+.settings__toggle {
   appearance: none;
   background: none;
   border: 0;
   padding: 0;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--t24);
@@ -358,7 +365,7 @@ body {
   transition: color 0.4s ease;
 }
 
-.voice__option.is-selected {
+.settings__toggle.is-selected {
   color: var(--t55);
 }
 
@@ -393,13 +400,6 @@ body {
   color: var(--t100);
 }
 
-.home__wordmark-note {
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--t28);
-}
-
 .app.is-desktop .home__lead {
   flex: 0 0 auto;
   gap: 24px;
@@ -429,6 +429,10 @@ body {
 
 .app.is-desktop .duration {
   font-size: 34px;
+}
+
+.app.is-desktop .duration--other {
+  font-size: 12px;
 }
 
 .app.is-desktop .durations__unit {
@@ -519,7 +523,7 @@ body {
   align-items: center;
   justify-content: center;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--t32);
@@ -673,19 +677,10 @@ body {
   min-height: 0;
 }
 
+/* Empty: it reserves the band the status used to occupy, so removing the
+   indicator did not move the countdown up the screen. */
 .session__status {
-  display: flex;
-  align-items: center;
-  gap: 9px;
   min-height: 12px;
-}
-
-.session__status-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #fff;
-  animation: pulse 3.4s ease-in-out infinite;
 }
 
 .session__body {
@@ -766,7 +761,7 @@ body {
 
 .session__signal {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--t22);
@@ -884,7 +879,7 @@ body {
   display: flex;
   justify-content: space-between;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--t28);
@@ -996,7 +991,7 @@ body {
 }
 
 .app.is-desktop .stat__label {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--t35);

@@ -1,4 +1,4 @@
-import type { Baseline, Minutes, NudgeVoice, SessionRecord, SessionTotals } from '../types'
+import type { Baseline, Minutes, SessionRecord, SessionTotals } from '../types'
 
 /**
  * Everything here stays on the device. Only aggregate numbers about a sit are
@@ -7,8 +7,9 @@ import type { Baseline, Minutes, NudgeVoice, SessionRecord, SessionTotals } from
 
 const HISTORY_KEY = 'still.history.v1'
 const PROGRESS_KEY = 'still.progress.v1'
-const VOICE_KEY = 'still.voice.v1'
 const SOUND_KEY = 'still.sound.v1'
+// v2: v1 held the old nudge-wording setting, which was a string, not a flag.
+const VOICE_KEY = 'still.voice.v2'
 const HISTORY_LIMIT = 200
 
 /** An interrupted sit older than this is not worth resuming into. */
@@ -51,7 +52,6 @@ export function saveSession(record: SessionRecord): void {
 export type Progress = {
   startedAt: number
   minutes: Minutes
-  voice: NudgeVoice
   /** Seconds already sat when the page went away. */
   elapsed: number
   totals: SessionTotals
@@ -74,19 +74,12 @@ export function loadProgress(): Progress | null {
   if (!progress) return null
   const expired = Date.now() - progress.savedAt > PROGRESS_STALE_MS
   const finished = progress.elapsed >= progress.minutes * 60
-  if (expired || finished) {
+  const unusable = !Number.isFinite(progress.minutes) || progress.minutes <= 0
+  if (expired || finished || unusable) {
     clearProgress()
     return null
   }
   return progress
-}
-
-export function loadVoice(): NudgeVoice {
-  return read<NudgeVoice>(VOICE_KEY) === 'poetic' ? 'poetic' : 'minimal'
-}
-
-export function saveVoice(voice: NudgeVoice): void {
-  write(VOICE_KEY, voice)
 }
 
 /** Sound is on by default: without it a sit with the eyes shut gives no cues. */
@@ -96,4 +89,13 @@ export function loadSound(): boolean {
 
 export function saveSound(enabled: boolean): void {
   write(SOUND_KEY, enabled)
+}
+
+/** The spoken lines, on by default for the same reason the chimes are. */
+export function loadVoice(): boolean {
+  return read<boolean>(VOICE_KEY) !== false
+}
+
+export function saveVoice(enabled: boolean): void {
+  write(VOICE_KEY, enabled)
 }

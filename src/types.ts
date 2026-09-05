@@ -3,9 +3,12 @@ export type Screen = 'home' | 'calibrate' | 'session' | 'complete'
 /** The verdict for a single moment of the sit. */
 export type Signal = 'settled' | 'eyes' | 'slouch' | 'away'
 
-export type NudgeVoice = 'minimal' | 'poetic'
-
-export type Minutes = 5 | 10 | 20
+/**
+ * How long a sit runs, in whole minutes. Any positive number — the home screen
+ * offers a few presets and a box for everything else — so anything read back
+ * from storage is checked before it is trusted.
+ */
+export type Minutes = number
 
 /** Captured during calibration; every session verdict is relative to these. */
 export type Baseline = {
