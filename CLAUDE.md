@@ -19,7 +19,7 @@ npm install          # postinstall fetches the two .task models + wasm into publ
 npm run dev          # vite dev server on localhost (a secure context; a LAN IP is not)
 npm run typecheck    # tsc -b --force — the only check in the repo
 npm run build        # tsc -b && vite build → dist/
-BASE_PATH=/sit-still-webapp/ npm run build   # build for a subpath
+BASE_PATH=/sit-still/ npm run build   # build for a subpath
 ```
 
 There is no test suite and no lint config (the `eslint-disable` comments in

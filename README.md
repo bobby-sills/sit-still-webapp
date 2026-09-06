@@ -12,7 +12,7 @@ recorded, and there is no account.
 
 Pushing to `claude/meditation-app-yx57dc` builds and publishes the app to GitHub
 Pages via `.github/workflows/deploy.yml`, at
-<https://bobby-sills.github.io/sit-still-webapp/>. That URL is HTTPS, which the
+<https://bobby-sills.github.io/sit-still/>. That URL is HTTPS, which the
 camera requires, so it also works on a phone.
 
 This needs Pages switched on once, by hand: **Settings → Pages → Build and
@@ -32,7 +32,7 @@ will host it. The camera needs a secure context, so deploy over HTTPS
 `http://192.168.1.5:5173` is not secure and the camera will not start there.
 
 To serve from a subpath, set `BASE_PATH` at build time
-(`BASE_PATH=/sit-still-webapp/ npm run build`); asset URLs are derived from it.
+(`BASE_PATH=/sit-still/ npm run build`); asset URLs are derived from it.
 
 ## How it works
 
