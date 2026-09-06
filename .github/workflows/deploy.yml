@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [claude/meditation-app-yx57dc]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

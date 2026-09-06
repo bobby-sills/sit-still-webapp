@@ -10,7 +10,7 @@ recorded, and there is no account.
 
 ## Running it without installing anything
 
-Pushing to `claude/meditation-app-yx57dc` builds and publishes the app to GitHub
+Pushing to `main` builds and publishes the app to GitHub
 Pages via `.github/workflows/deploy.yml`, at
 <https://bobby-sills.github.io/sit-still/>. That URL is HTTPS, which the
 camera requires, so it also works on a phone.

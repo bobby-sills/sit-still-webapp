@@ -32,7 +32,7 @@ Verifying behaviour means running the app in a browser and using the camera —
 append `?spm=<seconds>` in dev to scale the session clock (`spm=2` makes a 10
 minute sit last 20s). It is compiled out of production builds.
 
-Push to `claude/meditation-app-yx57dc` deploys to GitHub Pages
+Push to `main` deploys to GitHub Pages
 (`.github/workflows/deploy.yml`); that HTTPS URL is the way to exercise the
 camera on a phone.
 
